@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"os/exec"
@@ -36,6 +37,12 @@ var rootCmd = &cobra.Command{
 			}
 		}
 
+		// If both trace and watch are set, exit and explain
+		if trace && watch {
+			fmt.Println("You are a silly goose! You can't use --trace and --watch together. `mix test.watch` does not support the --trace flag. Please choose one or the other.")
+			os.Exit(1)
+		}
+
 		// Build the command
 		command := "mix test"
 		if watch {
@@ -65,39 +72,26 @@ var rootCmd = &cobra.Command{
 			return fmt.Errorf("error starting command: %v", err)
 		}
 
-		// Process output in a goroutine
-		done := make(chan error)
-		go func() {
-			buf := make([]byte, 1024)
-			re := regexp.MustCompile(`[0-9]+\ doctest,\ [0-9]+\ test,\ [0-9]+\ failures`)
-			for {
-				n, err := stdout.Read(buf)
-				if n > 0 {
-					line := string(buf[:n])
-					fmt.Print(line)
-
-					// Strip ANSI color codes
-					cleanLine := regexp.MustCompile(`\x1b\[[0-9;]*m`).ReplaceAllString(line, "")
-					if re.MatchString(cleanLine) {
-						// Update terminal title
-						fmt.Printf("\033]1;%s\007", cleanLine)
-					}
-				}
-				if err != nil {
-					done <- err
-					return
-				}
+		// Process output line-by-line in the main goroutine
+		scanner := bufio.NewScanner(stdout)
+		re := regexp.MustCompile(`(\d+)\s+doctest[s]?,\s+(\d+)\s+test[s]?,\s+(\d+)\s+failures`)
+		ansi := regexp.MustCompile(`\x1b\[[0-9;]*m`)
+		for scanner.Scan() {
+			line := scanner.Text()
+			fmt.Println(line)
+			cleanLine := ansi.ReplaceAllString(line, "")
+			if re.MatchString(cleanLine) && watch {
+				// Update both tab and window title for compatibility
+				fmt.Printf("\033]1;%s\007", cleanLine) // tab title
+				fmt.Printf("\033]0;%s\007", cleanLine) // window title
 			}
-		}()
-
-		// Wait for the command to finish
-		err = c.Wait()
-		if err != nil {
+		}
+		if err := scanner.Err(); err != nil {
 			return err
 		}
 
-		// Wait for the output processing to finish
-		return <-done
+		// Wait for the command to finish
+		return c.Wait()
 	},
 }
 
