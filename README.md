@@ -1,15 +1,17 @@
-I created this because it's such a pain in the ass to back up in the terminal and change the mix task when I want to watch vs run something one-off. This wraps `mix test` and `mix test.watch` and routes all your flags/args to the task and switches the task if `-w` is set. That's it, that's the fucking repo. Oh, and it updates the terminal tab with your test results so if you have a test suite running all day on a monitor it's easy to see the TDD builds as you are coding.
-
 # mtx
 
-**mtx** is a Go-based wrapper for Elixir's `mix test` command, providing convenient watch and trace options, and (optionally) updating your terminal tab/window title with test results.
+**mtx** is a wrapper around `mix test` and `mix test.watch`. That’s it.
+
+It passes all your flags and args straight through, swaps in `mix test.watch` when you use `-w`, and updates your terminal tab with test results so you can see your TDD cycle at a glance.
+
+I built this because switching between one-off test runs and watch mode shouldn’t suck. You tweak some args, run a test batch once, then want to go back to watching—except now you’re arrowing back to the start of the line just to replace `test` with `test.watch`. I got arthritis. Ain’t nobody got time for that.
 
 ## Features
 
-- **Watch mode:** Automatically reruns tests on file changes (`mix test.watch`).
-- **Trace mode:** Runs tests with detailed output (`--trace`).
-- **Pass-through flags:** Any additional flags or arguments are passed directly to `mix test`.
-- **Tab/Window title update:** (iTerm2 and some terminals) Updates the tab/window title with the latest test summary in watch mode.
+* 🔁 **Watch mode**: Automatically re-runs tests with `mix test.watch` on file changes.
+* 🔍 **Trace mode**: Adds `--trace` for detailed output.
+* 🎯 **Pass-through flags**: Everything else goes straight to `mix test` or `mix test.watch`.
+* 🪧 **Tab/window title updates**: Shows the latest test result in your terminal tab (works in iTerm2 and some others).
 
 ## Usage
 
@@ -19,61 +21,48 @@ mtx [flags] [mix test args...]
 
 ### Flags
 
-- `-w`, `--watch` &nbsp;&nbsp;&nbsp;&nbsp;Run tests in watch mode (`mix test.watch`)
-- `-t`, `--trace` &nbsp;&nbsp;&nbsp;&nbsp;Run tests with trace (`mix test --trace`)
-- `-h`, `--help` &nbsp;&nbsp;&nbsp;&nbsp;Show help
+* `-w`, `--watch` – Use `mix test.watch`
+* `-t`, `--trace` – Adds `--trace`
+* `-h`, `--help` – Show help
 
 ### Examples
 
 ```sh
-# Run all tests
+# Regular test run
 mtx
 
-# Run tests in watch mode
-mtx --watch
+# Watch mode
+mtx -w
 
-# Run tests with trace
-mtx --trace
+# Trace output
+mtx -t
 
-# Pass additional arguments to mix test
-mtx ./test/ --only wip
+# Run a specific directory with custom filters
+mtx ./test --only wip
 
-# Combine options
-mtx --watch --trace ./test/ --only wip
+# Combine flags
+mtx -w -t ./test --only wip
 ```
 
-## Installation
+## Install
 
-1. **Clone the repository:**
-   ```sh
-   git clone <your-repo-url>
-   cd mtx
-   ```
-
-2. **Build the binary:**
-   ```sh
-   go build -o mtx
-   ```
-
-3. **(Optional) Move to a directory in your PATH:**
-   ```sh
-   mv mtx /usr/local/bin/
-   ```
+```sh
+git clone <your-repo-url>
+cd mtx
+go build -o mtx
+mv mtx /usr/local/bin/ # optional
+```
 
 ## Requirements
 
-- Go 1.18+
-- Elixir and `mix` installed
+* Go 1.18+
+* Elixir with `mix`
 
 ## Notes
 
-- Tab/window title updates are supported in iTerm2 and some other terminals. VS Code's integrated terminal may not support this feature.
-- All unrecognized flags and arguments are passed directly to `mix test` or `mix test.watch`.
+* Tab title updates are tested on iTerm2. VS Code and others may not play nice.
+* Any extra flags or args are passed directly to `mix test`.
 
 ## License
 
-MIT
-
----
-
-Let me know if you want to customize any part of this README!
+[MIT](./LICENSE)
